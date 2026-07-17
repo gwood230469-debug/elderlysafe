@@ -1,0 +1,41 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Dangerous permission: prompted at runtime by CallScreeningModule
+         before use, only to check whether an incoming number is a known
+         family member — CallScreeningService itself needs neither this nor
+         READ_CALL_LOG/READ_PHONE_STATE to see caller details (Android 10+
+         hands the number to onScreenCall() directly). Keeping the manifest
+         footprint to exactly what's used matters for the Play Console
+         Permissions Declaration review this feature requires. -->
+    <uses-permission android:name="android.permission.READ_CONTACTS" />
+
+    <!-- Normal permission (no runtime prompt) — required to launch the
+         high-risk-call notification as a full-screen intent so it surfaces
+         even over the lock screen, matching how a real incoming call looks. -->
+    <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
+
+    <!-- Normal permission — the async risk-scoring network call to
+         score-call-risk. -->
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <application>
+        <!-- android:exported="true" is required by the OS for any
+             CallScreeningService — the framework itself, not arbitrary
+             third-party callers, binds to it, and BIND_SCREENING_SERVICE
+             restricts binding to the system. Declared here rather than via
+             a config-plugin manifest mod: as a com.android.library service
+             entry, Android's own build-time manifest merger folds this into
+             the app's final AndroidManifest.xml automatically once this
+             module is autolinked — no withDangerousMod/withAndroidManifest
+             code needed, and nothing to re-verify against Expo SDK bumps. -->
+        <service
+            android:name="expo.modules.callscreening.CallScreenerService"
+            android:permission="android.permission.BIND_SCREENING_SERVICE"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.telecom.CallScreeningService" />
+            </intent-filter>
+        </service>
+    </application>
+
+</manifest>

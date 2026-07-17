@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Join your family's SafeWord circle</title>
+    <style>
+      body {
+        font-family: Georgia, serif;
+        background: #f3f2f2;
+        color: #201f1d;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+        margin: 0;
+        padding: 24px;
+        text-align: center;
+      }
+      a.button {
+        display: inline-block;
+        margin-top: 16px;
+        padding: 14px 24px;
+        border: 1.5px solid #b68235;
+        border-radius: 4px;
+        color: #7d5411;
+        text-decoration: none;
+        font-weight: bold;
+      }
+    </style>
+  </head>
+  <body>
+    <div>
+      <h1>You've been invited to a SafeWord family circle</h1>
+      <p>Tap below to open the invite in the SafeWord app (install it from Google Play first if you haven't already).</p>
+      <a class="button" id="open-app" href="#">Open in SafeWord</a>
+    </div>
+    <script>
+      // Forwards this page's own ?token= query param into the app's custom
+      // URL scheme — this static page exists only because email/SMS/share-
+      // sheet links need a plain https:// URL to be tappable at all; the
+      // actual invite-claim logic lives entirely in the app
+      // (src/lib/invite.ts's parseInviteToken + PendingInviteContext).
+      const params = new URLSearchParams(window.location.search);
+      const token = params.get('token');
+      const link = document.getElementById('open-app');
+      if (token) {
+        const deepLink = 'safeword://invite?token=' + encodeURIComponent(token);
+        link.href = deepLink;
+        window.location.href = deepLink;
+      }
+    </script>
+  </body>
+</html>
