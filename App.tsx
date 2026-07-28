@@ -15,7 +15,7 @@ import { ProfileProvider, useProfile } from './src/context/ProfileContext';
 import { RootNavigator } from './src/navigation/RootNavigator';
 import { RootStackParamList } from './src/navigation/types';
 import { isSupabaseConfigured } from './src/lib/supabase';
-import { registerForPushNotificationsAsync, saveOwnPushToken } from './src/lib/push';
+import { ensureAndroidNotificationChannelsAsync, registerForPushNotificationsAsync, saveOwnPushToken } from './src/lib/push';
 import { parseIncomingCallRiskUrl } from './src/lib/deepLinks';
 import { configureCallScreening } from './modules/call-screening/src';
 import { colors, typography } from './src/theme/tokens';
@@ -31,6 +31,14 @@ function Gate() {
   const { session, loading: authLoading } = useAuth();
   const { loading: profileLoading, displayName, refresh: refreshProfile } = useProfile();
   const { loading: circleLoading, circleId, hasSafeWord, members, refresh: refreshCircle } = useCircle();
+
+  // Runs regardless of sign-in state, once, as early as possible — these
+  // channels must exist on-device BEFORE any push arrives on them, or
+  // Android silently drops it (see ensureAndroidNotificationChannelsAsync's
+  // own comment for why this was previously missing entirely).
+  useEffect(() => {
+    ensureAndroidNotificationChannelsAsync().catch((e) => console.warn('Could not register notification channels', e));
+  }, []);
 
   useEffect(() => {
     if (!session?.user.id) return;

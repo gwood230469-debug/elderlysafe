@@ -52,7 +52,7 @@ export function SettingsScreen({ navigation }: Props) {
           onPress={handleCallProtection}
           disabled={callProtectionStatus === 'unsupported' || callProtectionStatus === 'checking'}
         />
-        <SettingsRow label={copy.settings.notifications} onPress={() => {}} disabled />
+        <SettingsRow label={copy.settings.notifications} onPress={() => navigation.navigate('NotificationPreferences')} />
         <SettingsRow label={copy.settings.signOut} onPress={() => signOut()} />
       </View>
     </ScreenContainer>

@@ -5,7 +5,7 @@ import { Card } from '../components/Card';
 import { ScreenContainer } from '../components/ScreenContainer';
 import { copy } from '../constants/copy';
 import { useCircle } from '../context/CircleContext';
-import { sendPushNotification, getPushToken } from '../lib/push';
+import { notifyCircleMember } from '../lib/push';
 import { colors, spacing, typography } from '../theme/tokens';
 import { RootStackParamList } from '../navigation/types';
 
@@ -27,12 +27,12 @@ export function FamilyGuidingScreen({ route }: Props) {
 
   async function askSafewordAction() {
     if (!elderlyMember?.userId) return;
-    try {
-      const token = await getPushToken(elderlyMember.userId);
-      if (token) await sendPushNotification(token, 'SafeWord', 'A family member is asking you to check the safeword before continuing.');
-    } catch (e) {
-      console.warn('Could not send ask-safeword prompt', e);
-    }
+    await notifyCircleMember(
+      elderlyMember.userId,
+      'family_request',
+      'SafeWord',
+      'A family member is asking you to check the safeword before continuing.'
+    );
   }
 
   return (

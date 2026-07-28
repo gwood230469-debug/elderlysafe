@@ -49,6 +49,19 @@ export const copy = {
     callProtection: 'Call protection',
     signOut: 'Sign out',
   },
+  notificationPreferences: {
+    title: 'Notification preferences',
+    callRisk: {
+      label: 'Call risk alerts',
+      detail: 'When a family member flags a call as possible scam risk.',
+    },
+    familyRequests: {
+      label: 'Family requests',
+      detail: 'Loop-in requests and safeword check prompts from your circle.',
+    },
+    loadError: 'Could not load your notification preferences.',
+    saveError: 'Could not save that change. Please try again.',
+  },
 
   // --- Elderly-side call screens (handoff screens 1-3) ---
   incomingCall: {
