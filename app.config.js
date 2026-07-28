@@ -31,6 +31,12 @@ module.exports = {
     },
     plugins: [
       ['expo-notifications', { color: '#b68235' }],
+      [
+        'expo-location',
+        {
+          locationWhenInUsePermission: 'SafeWord uses your location to show the right emergency numbers for where you are.',
+        },
+      ],
       '@react-native-google-signin/google-signin',
       // modules/call-screening is a local Expo module (autolinked from
       // ./modules by default) — its native <service>/permission entries are

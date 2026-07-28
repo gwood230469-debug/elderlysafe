@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { ReactNode, useState } from 'react';
 import { StyleSheet, Text, TextInput, View } from 'react-native';
 import { usePreventScreenCapture } from 'expo-screen-capture';
 import { Button } from './Button';
 import { copy } from '../constants/copy';
 import { getErrorMessage } from '../lib/errors';
+import { suggestSafeWord } from '../lib/safeWordRotation';
 import { colors, radius, spacing, typography } from '../theme/tokens';
 
 type Props = {
@@ -11,9 +12,32 @@ type Props = {
   savedMessage?: string;
   saveLabel?: string;
   onSaved: (value: string) => Promise<void>;
+  // Fired right after a successful save, with the raw value still in
+  // memory — the ONLY point in the app's lifecycle where the plaintext
+  // safe word is available, since only a salted hash is ever persisted.
+  // A printable card export must happen here (or be re-entered later),
+  // never by trying to read the word back from storage.
+  onExportCard?: (rawValue: string) => void;
+  exportCardLabel?: string;
+  // Rendered below the export button once saved === true — e.g. onboarding
+  // uses this for its own "Continue to home" button, so the screen doesn't
+  // navigate away before the user has a chance to print the card.
+  footerWhenSaved?: ReactNode;
+  // Rendered between the guidance copy and the input — e.g. SafeWordScreen
+  // uses this for a rotation-age reminder.
+  headerExtra?: ReactNode;
 };
 
-export function SafeWordForm({ headline, savedMessage, saveLabel, onSaved }: Props) {
+export function SafeWordForm({
+  headline,
+  savedMessage,
+  saveLabel,
+  onSaved,
+  onExportCard,
+  exportCardLabel,
+  footerWhenSaved,
+  headerExtra,
+}: Props) {
   // Blocks screenshots/screen recording while the safe word is visible on
   // screen (Android FLAG_SECURE via this hook) — the one place in the app
   // with real platform security behavior, since the safe word is otherwise
@@ -23,15 +47,19 @@ export function SafeWordForm({ headline, savedMessage, saveLabel, onSaved }: Pro
   const [value, setValue] = useState('');
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [lastSavedValue, setLastSavedValue] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [suggestion, setSuggestion] = useState<string | null>(null);
 
   async function handleSave() {
     if (!value.trim()) return;
     setSaving(true);
     setError(null);
     try {
-      await onSaved(value.trim());
+      const trimmed = value.trim();
+      await onSaved(trimmed);
       setSaved(true);
+      setLastSavedValue(trimmed);
       setValue('');
     } catch (e) {
       setError(getErrorMessage(e, 'Could not save your safe word. Please try again.'));
@@ -45,6 +73,29 @@ export function SafeWordForm({ headline, savedMessage, saveLabel, onSaved }: Pro
       <Text style={styles.headline}>{headline}</Text>
       <Text style={styles.instruction}>{copy.safeword.instruction}</Text>
       <Text style={styles.guidance}>{copy.safeword.guidance}</Text>
+      {headerExtra}
+      {!saved &&
+        (suggestion ? (
+          <View style={styles.suggestionBox}>
+            <Text style={styles.suggestionText}>{copy.safeword.suggestionPrompt(suggestion)}</Text>
+            <View style={styles.suggestionButtons}>
+              <Button label={copy.safeword.useSuggestion} variant="quiet" onPress={() => setValue(suggestion)} style={styles.suggestionButton} />
+              <Button
+                label={copy.safeword.anotherSuggestion}
+                variant="ghost"
+                onPress={() => setSuggestion(suggestSafeWord())}
+                style={styles.suggestionButton}
+              />
+            </View>
+          </View>
+        ) : (
+          <Button
+            label={copy.safeword.needIdea}
+            variant="ghost"
+            onPress={() => setSuggestion(suggestSafeWord())}
+            style={styles.needIdeaButton}
+          />
+        ))}
       <TextInput
         value={value}
         onChangeText={setValue}
@@ -57,7 +108,16 @@ export function SafeWordForm({ headline, savedMessage, saveLabel, onSaved }: Pro
       />
       {error && <Text style={styles.error}>{error}</Text>}
       {saved && savedMessage && <Text style={styles.saved}>{savedMessage}</Text>}
+      {saved && lastSavedValue && onExportCard && (
+        <Button
+          label={exportCardLabel ?? copy.safeword.exportCard}
+          variant="quiet"
+          onPress={() => onExportCard(lastSavedValue)}
+          style={styles.button}
+        />
+      )}
       <Button label={saveLabel ?? copy.safeword.save} onPress={handleSave} disabled={saving || !value.trim()} style={styles.button} />
+      {saved && footerWhenSaved}
     </View>
   );
 }
@@ -105,5 +165,26 @@ const styles = StyleSheet.create({
   },
   button: {
     marginTop: spacing.sm,
+  },
+  suggestionBox: {
+    marginBottom: spacing.md,
+  },
+  suggestionText: {
+    fontFamily: typography.bodyFamily,
+    fontSize: typography.small,
+    color: colors.neutral[600],
+    marginBottom: spacing.xs,
+  },
+  suggestionButtons: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+  },
+  suggestionButton: {
+    paddingHorizontal: spacing.md,
+  },
+  needIdeaButton: {
+    alignSelf: 'flex-start',
+    marginBottom: spacing.md,
+    paddingHorizontal: 0,
   },
 });

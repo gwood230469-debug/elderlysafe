@@ -10,7 +10,7 @@ import { useAuth } from '../context/AuthContext';
 import { useCircle } from '../context/CircleContext';
 import { useProfile } from '../context/ProfileContext';
 import { getErrorMessage } from '../lib/errors';
-import { getPushToken, sendPushNotification } from '../lib/push';
+import { notifyCircleMember } from '../lib/push';
 import { createLoopInEvent } from '../lib/verification';
 import { colors, radius, spacing, typography } from '../theme/tokens';
 import { RootStackParamList } from '../navigation/types';
@@ -55,12 +55,7 @@ export function VerifyCallScreen(_props: Props) {
     setSentTo(member.displayName);
 
     if (member.userId) {
-      try {
-        const token = await getPushToken(member.userId);
-        if (token) await sendPushNotification(token, 'Family Circle', copy.loopin.notification(displayName ?? 'Someone in your circle'));
-      } catch (e) {
-        console.warn('Could not send loop-in push notification', e);
-      }
+      await notifyCircleMember(member.userId, 'family_request', 'Family Circle', copy.loopin.notification(displayName ?? 'Someone in your circle'));
     }
   }
 

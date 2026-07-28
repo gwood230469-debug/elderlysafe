@@ -15,7 +15,7 @@ import { ProfileProvider, useProfile } from './src/context/ProfileContext';
 import { RootNavigator } from './src/navigation/RootNavigator';
 import { RootStackParamList } from './src/navigation/types';
 import { isSupabaseConfigured } from './src/lib/supabase';
-import { registerForPushNotificationsAsync, saveOwnPushToken } from './src/lib/push';
+import { ensureAndroidNotificationChannelsAsync, registerForPushNotificationsAsync, saveOwnPushToken } from './src/lib/push';
 import { parseIncomingCallRiskUrl } from './src/lib/deepLinks';
 import { configureCallScreening } from './modules/call-screening/src';
 import { colors, typography } from './src/theme/tokens';
@@ -31,6 +31,14 @@ function Gate() {
   const { session, loading: authLoading } = useAuth();
   const { loading: profileLoading, displayName, refresh: refreshProfile } = useProfile();
   const { loading: circleLoading, circleId, hasSafeWord, members, refresh: refreshCircle } = useCircle();
+
+  // Runs regardless of sign-in state, once, as early as possible — these
+  // channels must exist on-device BEFORE any push arrives on them, or
+  // Android silently drops it (see ensureAndroidNotificationChannelsAsync's
+  // own comment for why this was previously missing entirely).
+  useEffect(() => {
+    ensureAndroidNotificationChannelsAsync().catch((e) => console.warn('Could not register notification channels', e));
+  }, []);
 
   useEffect(() => {
     if (!session?.user.id) return;
@@ -65,9 +73,16 @@ function Gate() {
   useEffect(() => {
     const sub = Notifications.addNotificationResponseReceivedListener((response) => {
       if (!navigationRef.isReady()) return;
-      const data = response.notification.request.content.data as { elderlyMemberName?: string; verificationEventId?: string } | undefined;
+      const data = response.notification.request.content.data as
+        | { type?: string; elderlyMemberName?: string; scenarioName?: string; verificationEventId?: string }
+        | undefined;
       if (response.actionIdentifier === 'join' || response.actionIdentifier === Notifications.DEFAULT_ACTION_IDENTIFIER) {
-        if (data?.elderlyMemberName) {
+        if (data?.type === 'rehearsal') {
+          navigationRef.navigate('Rehearsal', {
+            scenarioName: data.scenarioName ?? 'a family member',
+            verificationEventId: data.verificationEventId ?? '',
+          });
+        } else if (data?.elderlyMemberName) {
           navigationRef.navigate('FamilyGuiding', {
             elderlyMemberName: data.elderlyMemberName,
             verificationEventId: data.verificationEventId ?? '',

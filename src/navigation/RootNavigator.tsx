@@ -1,4 +1,5 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { copy } from '../constants/copy';
 import { colors, typography } from '../theme/tokens';
 import { RootStackParamList } from './types';
 
@@ -7,6 +8,10 @@ import { VerifyCallScreen } from '../screens/VerifyCallScreen';
 import { DashboardScreen } from '../screens/DashboardScreen';
 import { SafeWordScreen } from '../screens/SafeWordScreen';
 import { SettingsScreen } from '../screens/SettingsScreen';
+import { NotificationPreferencesScreen } from '../screens/NotificationPreferencesScreen';
+import { VerifyScriptScreen } from '../screens/VerifyScriptScreen';
+import { EmergencyNumbersScreen } from '../screens/EmergencyNumbersScreen';
+import { RehearsalScreen } from '../screens/RehearsalScreen';
 import { IncomingCallRiskScreen } from '../screens/IncomingCallRiskScreen';
 import { AskSafewordCallScreen } from '../screens/AskSafewordCallScreen';
 import { GuidedCallScreen } from '../screens/GuidedCallScreen';
@@ -34,6 +39,18 @@ export function RootNavigator({ initialRouteName }: { initialRouteName: keyof Ro
       <Stack.Screen name="Dashboard" component={DashboardScreen} options={{ title: 'Family circle' }} />
       <Stack.Screen name="SafeWord" component={SafeWordScreen} options={{ title: 'Safe word' }} />
       <Stack.Screen name="Settings" component={SettingsScreen} options={{ title: 'Settings' }} />
+      <Stack.Screen
+        name="NotificationPreferences"
+        component={NotificationPreferencesScreen}
+        options={{ title: copy.notificationPreferences.title }}
+      />
+      <Stack.Screen name="VerifyScript" component={VerifyScriptScreen} options={{ title: copy.verifyScript.title }} />
+      <Stack.Screen
+        name="EmergencyNumbers"
+        component={EmergencyNumbersScreen}
+        options={{ title: copy.emergencyNumbers.title }}
+      />
+      <Stack.Screen name="Rehearsal" component={RehearsalScreen} options={{ title: copy.rehearsal.title }} />
 
       <Stack.Screen
         name="IncomingCallRisk"

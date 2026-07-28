@@ -6,6 +6,8 @@ import { ScreenContainer } from '../components/ScreenContainer';
 import { copy } from '../constants/copy';
 import { useAuth } from '../context/AuthContext';
 import { useCircle } from '../context/CircleContext';
+import { useProfile } from '../context/ProfileContext';
+import { notifyCircleMember } from '../lib/push';
 import { createCallRiskEvent } from '../lib/verification';
 import { callColors } from '../theme/callTheme';
 import { tabularNumbers, typography } from '../theme/tokens';
@@ -22,7 +24,8 @@ type Props = NativeStackScreenProps<RootStackParamList, 'IncomingCallRisk'>;
 export function IncomingCallRiskScreen({ route, navigation }: Props) {
   const { callerNumber, riskScore: initialRisk, riskReasons } = route.params;
   const { session } = useAuth();
-  const { circleId } = useCircle();
+  const { circleId, members } = useCircle();
+  const { displayName } = useProfile();
   const [answered, setAnswered] = useState(false);
   const [declined, setDeclined] = useState(false);
   const [risk, setRisk] = useState(initialRisk);
@@ -44,12 +47,27 @@ export function IncomingCallRiskScreen({ route, navigation }: Props) {
     if (tickRef.current) clearInterval(tickRef.current);
     const userId = session?.user.id;
     if (circleId && userId) {
+      let id: string | null = null;
       try {
-        const id = await createCallRiskEvent(circleId, userId, callerNumber, risk, riskReasons);
+        id = await createCallRiskEvent(circleId, userId, callerNumber, risk, riskReasons);
         setEventId(id);
       } catch (e) {
         console.warn('Could not record call-risk alert', e);
       }
+
+      // Writing the VerificationEvent above is the source of truth — this
+      // push is a best-effort nudge on top of it. A circle-mate who misses
+      // it can still see the alert next time they open the dashboard.
+      const selfName = displayName ?? 'Someone in your circle';
+      const others = members.filter((m) => m.status === 'confirmed' && m.userId && m.userId !== userId);
+      await Promise.all(
+        others.map((m) =>
+          notifyCircleMember(m.userId as string, 'call_risk_alert', copy.callAlert.appLabel, copy.callAlert.body(selfName, risk), {
+            elderlyMemberName: selfName,
+            verificationEventId: id ?? '',
+          })
+        )
+      );
     }
     setAlerted(true);
   }
