@@ -23,10 +23,7 @@ module.exports = {
     },
     extra: {
       eas: {
-        // Run `eas init` once this project is linked to an EAS account —
-        // this placeholder must be replaced before `eas build`/push
-        // notifications will work.
-        projectId: 'REPLACE_WITH_EAS_PROJECT_ID',
+        projectId: '34f65058-54cd-454f-9f06-087f217ba0ba',
       },
     },
     plugins: [
@@ -42,6 +39,18 @@ module.exports = {
       // ./modules by default) — its native <service>/permission entries are
       // declared in the module's own AndroidManifest.xml and merged in by
       // the Android build automatically, so it needs no plugin entry here.
+      // It does, however, require API 29+ (RoleManager.ROLE_CALL_SCREENING),
+      // so the app's own minSdkVersion must be raised to match — Expo's
+      // managed default of 24 is otherwise incompatible with that module and
+      // fails the Android manifest merge.
+      [
+        'expo-build-properties',
+        {
+          android: {
+            minSdkVersion: 29,
+          },
+        },
+      ],
     ],
   },
 };
