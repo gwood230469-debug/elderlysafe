@@ -12,6 +12,7 @@ import android.os.Build
 import android.provider.ContactsContract
 import android.telecom.Call
 import android.telecom.CallScreeningService
+import android.telecom.Connection
 import androidx.core.app.NotificationCompat
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -69,9 +70,13 @@ class CallScreenerService : CallScreeningService() {
 
   private fun verificationStatusFor(callDetails: Call.Details): String {
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) return "unverified"
+    // Call.Details.getCallerNumberVerificationStatus() returns one of
+    // Connection's VERIFICATION_STATUS_* constants -- they aren't
+    // duplicated onto Call.Details itself, which is why referencing them
+    // as Call.Details.VERIFICATION_STATUS_* fails to resolve.
     return when (callDetails.callerNumberVerificationStatus) {
-      Call.Details.VERIFICATION_STATUS_PASSED -> "passed"
-      Call.Details.VERIFICATION_STATUS_FAILED -> "failed"
+      Connection.VERIFICATION_STATUS_PASSED -> "passed"
+      Connection.VERIFICATION_STATUS_FAILED -> "failed"
       else -> "unverified"
     }
   }
