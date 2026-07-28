@@ -126,8 +126,18 @@ export async function safeWordExists(circleId: string): Promise<boolean> {
 }
 
 export async function setSafeWord(circleId: string, userId: string, encryptedValue: string): Promise<void> {
+  // onConflict must be explicit: safe_words' primary key is `id` (not
+  // provided here), while `circle_id` — the column that actually identifies
+  // "this circle's safe word" — is only a separate unique constraint.
+  // Without onConflict, PostgREST upserts against the primary key by
+  // default, so `id` never matches an existing row and every save after
+  // the first hits the circle_id unique constraint instead of updating it —
+  // i.e. changing an already-set safe word always failed.
   const { error } = await supabase
     .from('safe_words')
-    .upsert({ circle_id: circleId, encrypted_value: encryptedValue, updated_by: userId, updated_at: new Date().toISOString() });
+    .upsert(
+      { circle_id: circleId, encrypted_value: encryptedValue, updated_by: userId, updated_at: new Date().toISOString() },
+      { onConflict: 'circle_id' }
+    );
   if (error) throw error;
 }
