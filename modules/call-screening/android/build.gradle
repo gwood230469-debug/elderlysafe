@@ -12,9 +12,15 @@ useExpoPublishing()
 
 android {
   namespace "expo.modules.callscreening"
+  // Recent Android Gradle Plugin versions require every module to declare
+  // its own compileSdk rather than inheriting one implicitly from the root
+  // project — this must be kept in sync with the app's own compileSdk
+  // (currently 36, resolved from the installed Expo SDK 57 defaults).
+  compileSdk 36
   defaultConfig {
     // CallScreeningService / RoleManager.ROLE_CALL_SCREENING requires API 29+
     minSdkVersion 29
+    targetSdkVersion 36
   }
 }
 
