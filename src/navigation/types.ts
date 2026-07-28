@@ -7,6 +7,7 @@ export type RootStackParamList = {
   SafeWord: undefined;
   Settings: undefined;
   NotificationPreferences: undefined;
+  VerifyScript: undefined;
 
   // Automatic risk-detection pipeline (Android CallScreeningService deep
   // link → these three, in order) — dark call-chrome screens.

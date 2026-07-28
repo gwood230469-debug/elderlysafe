@@ -37,6 +37,15 @@ export function HomeScreen({ navigation }: Props) {
           </Card>
         </Pressable>
 
+        <Pressable
+          accessibilityRole="button"
+          hitSlop={8}
+          onPress={() => navigation.navigate('VerifyScript')}
+          style={styles.scriptLinkWrap}
+        >
+          <Text style={styles.scriptLink}>{copy.home.verifyScriptLink} →</Text>
+        </Pressable>
+
         <Text style={styles.sectionLabel}>{copy.home.circle.label}</Text>
         <FlatList
           data={confirmedMembers}
@@ -82,10 +91,18 @@ const styles = StyleSheet.create({
     color: colors.neutral[600],
   },
   ctaWrap: {
-    marginBottom: spacing.xl,
+    marginBottom: spacing.sm,
   },
   ctaPressed: {
     opacity: 0.85,
+  },
+  scriptLinkWrap: {
+    marginBottom: spacing.xl,
+  },
+  scriptLink: {
+    fontFamily: typography.bodyFamily,
+    fontSize: typography.small,
+    color: colors.accentText,
   },
   ctaTitle: {
     fontFamily: typography.headingFamily,
