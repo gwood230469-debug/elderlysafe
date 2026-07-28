@@ -10,6 +10,8 @@ import { useProfile } from '../context/ProfileContext';
 import { useCircle } from '../context/CircleContext';
 import { useCircleReadiness } from '../hooks/useCircleReadiness';
 import { getErrorMessage } from '../lib/errors';
+import { getInviteTokenForMember } from '../lib/circle';
+import { shareInvite } from '../lib/invite';
 import { sendRehearsalPrompt } from '../lib/verification';
 import { colors, radius, spacing, tabularNumbers, typography } from '../theme/tokens';
 import { RootStackParamList } from '../navigation/types';
@@ -23,6 +25,7 @@ export function DashboardScreen({ navigation }: Props) {
   const { recentCalls, lastRehearsedByMember, loading, error: readinessError } = useCircleReadiness(circleId);
   const [actionError, setActionError] = useState<string | null>(null);
   const [sendingTo, setSendingTo] = useState<string | null>(null);
+  const [resendingTo, setResendingTo] = useState<string | null>(null);
 
   const confirmedMembers = members.filter((m) => m.status === 'confirmed');
   const invitedMembers = members.filter((m) => m.status === 'invited');
@@ -37,6 +40,19 @@ export function DashboardScreen({ navigation }: Props) {
       setActionError(getErrorMessage(e, 'Could not send a practice run.'));
     } finally {
       setSendingTo(null);
+    }
+  }
+
+  async function handleResend(member: CircleMember) {
+    setResendingTo(member.id);
+    try {
+      const token = await getInviteTokenForMember(member.id);
+      if (!token) throw new Error('That invite has expired — add them again to send a new one.');
+      await shareInvite(displayName ?? 'Your family member', member.displayName, token);
+    } catch (e) {
+      setActionError(getErrorMessage(e, 'Could not resend that invite.'));
+    } finally {
+      setResendingTo(null);
     }
   }
 
@@ -65,6 +81,11 @@ export function DashboardScreen({ navigation }: Props) {
                   <Text style={styles.memberName}>{member.displayName}</Text>
                   <Text style={styles.invitedTag}>{copy.circle.status.invited}</Text>
                 </View>
+                <Pressable onPress={() => handleResend(member)} disabled={resendingTo === member.id} hitSlop={4}>
+                  <Text style={styles.resendLink}>
+                    {resendingTo === member.id ? 'Sending…' : copy.circle.resend}
+                  </Text>
+                </Pressable>
               </Card>
             ))}
             <Pressable onPress={() => navigation.navigate('OnboardingAddMembers')} style={styles.addCard}>
@@ -128,6 +149,12 @@ const styles = StyleSheet.create({
   memberHeaderRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   memberName: { flex: 1, fontFamily: typography.bodyFamilyMedium, fontSize: typography.body, color: colors.text },
   invitedTag: { fontFamily: typography.bodyFamily, fontSize: typography.small, color: colors.neutral[600] },
+  resendLink: {
+    fontFamily: typography.bodyFamily,
+    fontSize: typography.small,
+    color: colors.accentText,
+    textDecorationLine: 'underline',
+  },
   addCard: {
     borderWidth: 1,
     borderColor: colors.divider,
