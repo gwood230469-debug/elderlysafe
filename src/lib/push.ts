@@ -67,13 +67,17 @@ const NOTIFICATION_CHANNELS: Record<NotificationChannelId, Notifications.Notific
     name: 'Call risk alerts',
     description: 'A family member flagged a call as possible scam risk and may need help.',
     importance: Notifications.AndroidImportance.MAX,
-    sound: 'default',
+    // No `sound` field: Android channels use the system's own default
+    // notification sound when this is left unset. Setting it to the
+    // string 'default' (as this used to) tells the config plugin to look
+    // for a *custom* bundled sound file literally named "default", which
+    // was never bundled -- producing a build-time "Custom sound 'default'
+    // not found" error for no benefit over just omitting the field.
   },
   'family-alert': {
     name: 'Family requests',
     description: 'Loop-in requests and safeword check prompts from your family circle.',
     importance: Notifications.AndroidImportance.HIGH,
-    sound: 'default',
   },
 };
 
