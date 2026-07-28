@@ -4,6 +4,7 @@ import { usePreventScreenCapture } from 'expo-screen-capture';
 import { Button } from './Button';
 import { copy } from '../constants/copy';
 import { getErrorMessage } from '../lib/errors';
+import { suggestSafeWord } from '../lib/safeWordRotation';
 import { colors, radius, spacing, typography } from '../theme/tokens';
 
 type Props = {
@@ -22,9 +23,21 @@ type Props = {
   // uses this for its own "Continue to home" button, so the screen doesn't
   // navigate away before the user has a chance to print the card.
   footerWhenSaved?: ReactNode;
+  // Rendered between the guidance copy and the input — e.g. SafeWordScreen
+  // uses this for a rotation-age reminder.
+  headerExtra?: ReactNode;
 };
 
-export function SafeWordForm({ headline, savedMessage, saveLabel, onSaved, onExportCard, exportCardLabel, footerWhenSaved }: Props) {
+export function SafeWordForm({
+  headline,
+  savedMessage,
+  saveLabel,
+  onSaved,
+  onExportCard,
+  exportCardLabel,
+  footerWhenSaved,
+  headerExtra,
+}: Props) {
   // Blocks screenshots/screen recording while the safe word is visible on
   // screen (Android FLAG_SECURE via this hook) — the one place in the app
   // with real platform security behavior, since the safe word is otherwise
@@ -36,6 +49,7 @@ export function SafeWordForm({ headline, savedMessage, saveLabel, onSaved, onExp
   const [saved, setSaved] = useState(false);
   const [lastSavedValue, setLastSavedValue] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [suggestion, setSuggestion] = useState<string | null>(null);
 
   async function handleSave() {
     if (!value.trim()) return;
@@ -59,6 +73,29 @@ export function SafeWordForm({ headline, savedMessage, saveLabel, onSaved, onExp
       <Text style={styles.headline}>{headline}</Text>
       <Text style={styles.instruction}>{copy.safeword.instruction}</Text>
       <Text style={styles.guidance}>{copy.safeword.guidance}</Text>
+      {headerExtra}
+      {!saved &&
+        (suggestion ? (
+          <View style={styles.suggestionBox}>
+            <Text style={styles.suggestionText}>{copy.safeword.suggestionPrompt(suggestion)}</Text>
+            <View style={styles.suggestionButtons}>
+              <Button label={copy.safeword.useSuggestion} variant="quiet" onPress={() => setValue(suggestion)} style={styles.suggestionButton} />
+              <Button
+                label={copy.safeword.anotherSuggestion}
+                variant="ghost"
+                onPress={() => setSuggestion(suggestSafeWord())}
+                style={styles.suggestionButton}
+              />
+            </View>
+          </View>
+        ) : (
+          <Button
+            label={copy.safeword.needIdea}
+            variant="ghost"
+            onPress={() => setSuggestion(suggestSafeWord())}
+            style={styles.needIdeaButton}
+          />
+        ))}
       <TextInput
         value={value}
         onChangeText={setValue}
@@ -128,5 +165,26 @@ const styles = StyleSheet.create({
   },
   button: {
     marginTop: spacing.sm,
+  },
+  suggestionBox: {
+    marginBottom: spacing.md,
+  },
+  suggestionText: {
+    fontFamily: typography.bodyFamily,
+    fontSize: typography.small,
+    color: colors.neutral[600],
+    marginBottom: spacing.xs,
+  },
+  suggestionButtons: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+  },
+  suggestionButton: {
+    paddingHorizontal: spacing.md,
+  },
+  needIdeaButton: {
+    alignSelf: 'flex-start',
+    marginBottom: spacing.md,
+    paddingHorizontal: 0,
   },
 });

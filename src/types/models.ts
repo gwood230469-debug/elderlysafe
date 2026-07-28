@@ -25,6 +25,8 @@ export type CircleMember = {
   invitedAt: string;
   confirmedAt: string | null;
   avatarUrl?: string | null;
+  /** Null until explicitly confirmed (see setSafeWord/markMemberInformed) or after a rotation clears it. */
+  safeWordInformedAt: string | null;
 };
 
 export type CircleInvite = {
@@ -45,9 +47,9 @@ export type SafeWord = {
   updatedBy: string;
 };
 
-export type VerificationEventType = 'loop_in_request' | 'call_risk_alert' | 'safeword_verification';
+export type VerificationEventType = 'loop_in_request' | 'call_risk_alert' | 'safeword_verification' | 'rehearsal_prompt';
 
-export type VerificationEventResolution = 'declined' | 'verified_safe' | 'safeword_failed' | 'ignored';
+export type VerificationEventResolution = 'declined' | 'verified_safe' | 'safeword_failed' | 'ignored' | 'completed';
 
 export type VerificationEvent = {
   id: string;

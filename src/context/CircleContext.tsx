@@ -1,6 +1,6 @@
 import { createContext, ReactNode, useContext, useEffect, useState } from 'react';
 import { useAuth } from './AuthContext';
-import { createCircle, getOwnCircleState, inviteMember, listMembers, safeWordExists, setSafeWord } from '../lib/circle';
+import { createCircle, getOwnCircleState, inviteMember, listMembers, markMemberInformed, safeWordExists, setSafeWord } from '../lib/circle';
 import { hashSafeWord } from '../lib/safeWordHash';
 import { getErrorMessage } from '../lib/errors';
 import { CircleMember } from '../types/models';
@@ -17,6 +17,7 @@ type CircleContextValue = {
   ensureOwnCircle: () => Promise<string>;
   addMember: (name: string, phone: string | null) => Promise<{ memberId: string; inviteToken: string }>;
   saveSafeWord: (rawValue: string) => Promise<void>;
+  markInformed: (memberId: string) => Promise<void>;
 };
 
 const CircleContext = createContext<CircleContextValue | null>(null);
@@ -90,6 +91,15 @@ export function CircleProvider({ children }: { children: ReactNode }) {
     const hashed = await hashSafeWord(rawValue);
     await setSafeWord(id, userId, hashed);
     setHasSafeWord(true);
+    // setSafeWord also sets/clears every confirmed member's
+    // safe_word_informed_at server-side — refetch so local state matches.
+    const refreshedMembers = await listMembers(id);
+    setMembers(refreshedMembers);
+  }
+
+  async function markInformed(memberId: string): Promise<void> {
+    await markMemberInformed(memberId);
+    setMembers((prev) => prev.map((m) => (m.id === memberId ? { ...m, safeWordInformedAt: new Date().toISOString() } : m)));
   }
 
   useEffect(() => {
@@ -99,7 +109,9 @@ export function CircleProvider({ children }: { children: ReactNode }) {
   }, [session?.user.id]);
 
   return (
-    <CircleContext.Provider value={{ loading, circleId, members, hasSafeWord, error, refresh, ensureOwnCircle, addMember, saveSafeWord }}>
+    <CircleContext.Provider
+      value={{ loading, circleId, members, hasSafeWord, error, refresh, ensureOwnCircle, addMember, saveSafeWord, markInformed }}
+    >
       {children}
     </CircleContext.Provider>
   );

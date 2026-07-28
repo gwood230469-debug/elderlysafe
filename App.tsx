@@ -73,9 +73,16 @@ function Gate() {
   useEffect(() => {
     const sub = Notifications.addNotificationResponseReceivedListener((response) => {
       if (!navigationRef.isReady()) return;
-      const data = response.notification.request.content.data as { elderlyMemberName?: string; verificationEventId?: string } | undefined;
+      const data = response.notification.request.content.data as
+        | { type?: string; elderlyMemberName?: string; scenarioName?: string; verificationEventId?: string }
+        | undefined;
       if (response.actionIdentifier === 'join' || response.actionIdentifier === Notifications.DEFAULT_ACTION_IDENTIFIER) {
-        if (data?.elderlyMemberName) {
+        if (data?.type === 'rehearsal') {
+          navigationRef.navigate('Rehearsal', {
+            scenarioName: data.scenarioName ?? 'a family member',
+            verificationEventId: data.verificationEventId ?? '',
+          });
+        } else if (data?.elderlyMemberName) {
           navigationRef.navigate('FamilyGuiding', {
             elderlyMemberName: data.elderlyMemberName,
             verificationEventId: data.verificationEventId ?? '',

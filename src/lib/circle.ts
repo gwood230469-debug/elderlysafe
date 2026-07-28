@@ -44,14 +44,20 @@ export async function createCircle(userId: string): Promise<string> {
   return data.id;
 }
 
-export async function listMembers(circleId: string): Promise<CircleMember[]> {
-  const { data, error } = await supabase
-    .from('circle_members')
-    .select('id, circle_id, user_id, phone_number, display_name, status, invited_at, confirmed_at')
-    .eq('circle_id', circleId)
-    .order('invited_at', { ascending: true });
-  if (error) throw error;
-  return (data ?? []).map((row) => ({
+const MEMBER_COLUMNS = 'id, circle_id, user_id, phone_number, display_name, status, invited_at, confirmed_at, safe_word_informed_at';
+
+function mapMemberRow(row: {
+  id: string;
+  circle_id: string;
+  user_id: string | null;
+  phone_number: string | null;
+  display_name: string;
+  status: CircleMember['status'];
+  invited_at: string;
+  confirmed_at: string | null;
+  safe_word_informed_at: string | null;
+}): CircleMember {
+  return {
     id: row.id,
     circleId: row.circle_id,
     userId: row.user_id,
@@ -60,7 +66,30 @@ export async function listMembers(circleId: string): Promise<CircleMember[]> {
     status: row.status,
     invitedAt: row.invited_at,
     confirmedAt: row.confirmed_at,
-  }));
+    safeWordInformedAt: row.safe_word_informed_at,
+  };
+}
+
+export async function listMembers(circleId: string): Promise<CircleMember[]> {
+  const { data, error } = await supabase
+    .from('circle_members')
+    .select(MEMBER_COLUMNS)
+    .eq('circle_id', circleId)
+    .order('invited_at', { ascending: true });
+  if (error) throw error;
+  return (data ?? []).map(mapMemberRow);
+}
+
+// Coordinator-facing "mark as told" action for the readiness dashboard —
+// the app never has the plaintext safe word to re-send automatically (see
+// safeWordCard.ts), so this just records that the member has been told by
+// some other means (a call, showing them the printed card, etc).
+export async function markMemberInformed(memberId: string): Promise<void> {
+  const { error } = await supabase
+    .from('circle_members')
+    .update({ safe_word_informed_at: new Date().toISOString() })
+    .eq('id', memberId);
+  if (error) throw error;
 }
 
 export type NewMemberInvite = { member: CircleMember; inviteToken: string };
@@ -74,7 +103,7 @@ export async function inviteMember(
   const { data: memberRow, error: memberError } = await supabase
     .from('circle_members')
     .insert({ circle_id: circleId, display_name: displayName, phone_number: phoneNumber, status: 'invited' })
-    .select('id, circle_id, user_id, phone_number, display_name, status, invited_at, confirmed_at')
+    .select(MEMBER_COLUMNS)
     .single();
   if (memberError) throw memberError;
 
@@ -86,16 +115,7 @@ export async function inviteMember(
   if (inviteError) throw inviteError;
 
   return {
-    member: {
-      id: memberRow.id,
-      circleId: memberRow.circle_id,
-      userId: memberRow.user_id,
-      phoneNumber: memberRow.phone_number,
-      displayName: memberRow.display_name,
-      status: memberRow.status,
-      invitedAt: memberRow.invited_at,
-      confirmedAt: memberRow.confirmed_at,
-    },
+    member: mapMemberRow(memberRow),
     inviteToken: inviteRow.token,
   };
 }
@@ -125,7 +145,15 @@ export async function safeWordExists(circleId: string): Promise<boolean> {
   return Boolean(data);
 }
 
+export async function getSafeWordUpdatedAt(circleId: string): Promise<string | null> {
+  const { data, error } = await supabase.from('safe_words').select('updated_at').eq('circle_id', circleId).maybeSingle();
+  if (error) throw error;
+  return data?.updated_at ?? null;
+}
+
 export async function setSafeWord(circleId: string, userId: string, encryptedValue: string): Promise<void> {
+  const hadSafeWordBefore = await safeWordExists(circleId);
+
   // onConflict must be explicit: safe_words' primary key is `id` (not
   // provided here), while `circle_id` — the column that actually identifies
   // "this circle's safe word" — is only a separate unique constraint.
@@ -140,4 +168,18 @@ export async function setSafeWord(circleId: string, userId: string, encryptedVal
       { onConflict: 'circle_id' }
     );
   if (error) throw error;
+
+  // First time it's ever set: every already-confirmed member was there when
+  // it was set "together" (OnboardingSafeWordScreen only allows this once a
+  // member has confirmed), so mark them informed immediately. Any later
+  // rotation clears it for everyone instead — they need to actually be told
+  // the new word (via markMemberInformed, or a fresh printed card) before
+  // the dashboard shows them as informed again.
+  const informedAt = hadSafeWordBefore ? null : new Date().toISOString();
+  const { error: memberError } = await supabase
+    .from('circle_members')
+    .update({ safe_word_informed_at: informedAt })
+    .eq('circle_id', circleId)
+    .eq('status', 'confirmed');
+  if (memberError) throw memberError;
 }

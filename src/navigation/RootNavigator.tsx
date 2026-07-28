@@ -11,6 +11,7 @@ import { SettingsScreen } from '../screens/SettingsScreen';
 import { NotificationPreferencesScreen } from '../screens/NotificationPreferencesScreen';
 import { VerifyScriptScreen } from '../screens/VerifyScriptScreen';
 import { EmergencyNumbersScreen } from '../screens/EmergencyNumbersScreen';
+import { RehearsalScreen } from '../screens/RehearsalScreen';
 import { IncomingCallRiskScreen } from '../screens/IncomingCallRiskScreen';
 import { AskSafewordCallScreen } from '../screens/AskSafewordCallScreen';
 import { GuidedCallScreen } from '../screens/GuidedCallScreen';
@@ -49,6 +50,7 @@ export function RootNavigator({ initialRouteName }: { initialRouteName: keyof Ro
         component={EmergencyNumbersScreen}
         options={{ title: copy.emergencyNumbers.title }}
       />
+      <Stack.Screen name="Rehearsal" component={RehearsalScreen} options={{ title: copy.rehearsal.title }} />
 
       <Stack.Screen
         name="IncomingCallRisk"
