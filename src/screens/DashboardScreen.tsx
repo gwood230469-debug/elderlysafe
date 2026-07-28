@@ -47,7 +47,7 @@ export function DashboardScreen({ navigation }: Props) {
     setResendingTo(member.id);
     try {
       const token = await getInviteTokenForMember(member.id);
-      if (!token) throw new Error('That invite has expired — add them again to send a new one.');
+      if (!token) throw new Error('That invite has expired - add them again to send a new one.');
       await shareInvite(displayName ?? 'Your family member', member.displayName, token);
     } catch (e) {
       setActionError(getErrorMessage(e, 'Could not resend that invite.'));
@@ -83,7 +83,7 @@ export function DashboardScreen({ navigation }: Props) {
                 </View>
                 <Pressable onPress={() => handleResend(member)} disabled={resendingTo === member.id} hitSlop={4}>
                   <Text style={styles.resendLink}>
-                    {resendingTo === member.id ? 'Sending…' : copy.circle.resend}
+                    {resendingTo === member.id ? 'Sending...' : copy.circle.resend}
                   </Text>
                 </Pressable>
               </Card>
