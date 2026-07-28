@@ -23,7 +23,6 @@ export const copy = {
   home: {
     greeting: (firstName: string) => `Good afternoon, ${firstName}`,
     cta: { title: 'Verify a call', subtitle: 'Someone asking for money or help right now? Check here first.' },
-    verifyScriptLink: 'What to do if a call feels wrong',
     circle: { label: 'Your family circle' },
   },
   safeword: {
