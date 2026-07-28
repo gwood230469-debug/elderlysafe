@@ -10,10 +10,11 @@ import { StatusBar } from 'expo-status-bar';
 
 import { AuthProvider, useAuth } from './src/context/AuthContext';
 import { CircleProvider, useCircle } from './src/context/CircleContext';
-import { PendingInviteProvider } from './src/context/PendingInviteContext';
+import { PendingInviteProvider, usePendingInvite } from './src/context/PendingInviteContext';
 import { ProfileProvider, useProfile } from './src/context/ProfileContext';
 import { RootNavigator } from './src/navigation/RootNavigator';
 import { RootStackParamList } from './src/navigation/types';
+import { claimInvite } from './src/lib/circle';
 import { isSupabaseConfigured } from './src/lib/supabase';
 import { ensureAndroidNotificationChannelsAsync, registerForPushNotificationsAsync, saveOwnPushToken } from './src/lib/push';
 import { parseIncomingCallRiskUrl } from './src/lib/deepLinks';
@@ -31,6 +32,7 @@ function Gate() {
   const { session, loading: authLoading } = useAuth();
   const { loading: profileLoading, displayName, refresh: refreshProfile } = useProfile();
   const { loading: circleLoading, circleId, hasSafeWord, members, refresh: refreshCircle } = useCircle();
+  const { token: pendingInviteToken, clear: clearPendingInvite } = usePendingInvite();
 
   // Runs regardless of sign-in state, once, as early as possible — these
   // channels must exist on-device BEFORE any push arrives on them, or
@@ -39,6 +41,23 @@ function Gate() {
   useEffect(() => {
     ensureAndroidNotificationChannelsAsync().catch((e) => console.warn('Could not register notification channels', e));
   }, []);
+
+  // Safety net alongside SignInScreen/NamePromptScreen's own claimInvite
+  // calls: those only ever run during first-time onboarding. Someone who's
+  // already signed in and past onboarding (e.g. re-tapping an old invite,
+  // or being invited to a second circle) previously had their tapped
+  // invite token silently ignored -- nothing else ever consumed it. A
+  // token already claimed by one of those screens just fails harmlessly
+  // here (already used), so there's no double-claim risk.
+  useEffect(() => {
+    const userId = session?.user.id;
+    if (!userId || !pendingInviteToken) return;
+    claimInvite(pendingInviteToken)
+      .then(() => refreshCircle(userId))
+      .catch(() => {})
+      .finally(() => clearPendingInvite());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session?.user.id, pendingInviteToken]);
 
   useEffect(() => {
     if (!session?.user.id) return;
