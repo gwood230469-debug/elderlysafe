@@ -30,6 +30,8 @@ export const copy = {
     guidance: 'Avoid pet names, birthdays, or anything public on social media.',
     save: 'Save safe word',
     changedNotification: 'Your family safe word was updated.',
+    exportCard: 'Print a card for your family',
+    exportCardError: "Could not create the card. Please try again.",
   },
   circle: {
     add: 'Add family member',
@@ -41,6 +43,18 @@ export const copy = {
   loopin: {
     button: 'Loop in someone else',
     notification: (name: string) => `${name} thinks they might be on a scam call. Can you help?`,
+  },
+  verifyScript: {
+    title: 'If a call feels wrong, do this',
+    subtitle: "You don't need to figure this out live on the phone. Just work down this list.",
+    steps: [
+      'Hang up. A genuine emergency can always wait two minutes for you to call back safely — a scammer pressuring you to stay on the line is itself a warning sign.',
+      "Call them back yourself, using the number you already have saved for them — never the number that just called you, even if the caller ID looked right.",
+      'Ask them your family safe word. Real family always knows it. A scammer never will.',
+      "Don't send money, gift cards, wire transfers, or cryptocurrency to anyone while you're still unsure — no genuine emergency requires that from you over the phone.",
+      'Still unsure? Loop in another family member before doing anything else.',
+    ],
+    stillNeedHelp: 'If you believe someone is in immediate danger, use your phone\'s own emergency call feature — see the numbers below.',
   },
   settings: {
     changeSafeWord: 'Change safe word',
