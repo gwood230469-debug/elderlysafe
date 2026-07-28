@@ -10,6 +10,7 @@ import { SafeWordScreen } from '../screens/SafeWordScreen';
 import { SettingsScreen } from '../screens/SettingsScreen';
 import { NotificationPreferencesScreen } from '../screens/NotificationPreferencesScreen';
 import { VerifyScriptScreen } from '../screens/VerifyScriptScreen';
+import { EmergencyNumbersScreen } from '../screens/EmergencyNumbersScreen';
 import { IncomingCallRiskScreen } from '../screens/IncomingCallRiskScreen';
 import { AskSafewordCallScreen } from '../screens/AskSafewordCallScreen';
 import { GuidedCallScreen } from '../screens/GuidedCallScreen';
@@ -43,6 +44,11 @@ export function RootNavigator({ initialRouteName }: { initialRouteName: keyof Ro
         options={{ title: copy.notificationPreferences.title }}
       />
       <Stack.Screen name="VerifyScript" component={VerifyScriptScreen} options={{ title: copy.verifyScript.title }} />
+      <Stack.Screen
+        name="EmergencyNumbers"
+        component={EmergencyNumbersScreen}
+        options={{ title: copy.emergencyNumbers.title }}
+      />
 
       <Stack.Screen
         name="IncomingCallRisk"

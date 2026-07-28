@@ -8,6 +8,7 @@ export type RootStackParamList = {
   Settings: undefined;
   NotificationPreferences: undefined;
   VerifyScript: undefined;
+  EmergencyNumbers: undefined;
 
   // Automatic risk-detection pipeline (Android CallScreeningService deep
   // link → these three, in order) — dark call-chrome screens.

@@ -57,6 +57,20 @@ export const copy = {
     ],
     stillNeedHelp: 'If you believe someone is in immediate danger, use your phone\'s own emergency call feature — see the numbers below.',
   },
+  emergencyNumbers: {
+    title: 'Emergency numbers',
+    subtitle: (countryName: string) => `Showing numbers for ${countryName}, based on your phone's language and region.`,
+    emergencyLabel: 'Emergency — fire, police, ambulance',
+    emergencySosNote:
+      "For an active emergency, your phone's own Emergency SOS feature is often faster than dialling — it works even from the lock screen.",
+    nonEmergencyLabel: 'Non-emergency police',
+    nonEmergencyMissing: 'No single national number — see the note below.',
+    embassyLabel: "Outside your home country?",
+    detectLocationButton: 'Use my current location instead',
+    detecting: 'Finding your location…',
+    locationDeniedError: "Couldn't access your location. Showing numbers based on your phone's language/region setting instead.",
+    sourceNote: (date: string) => `Numbers last checked ${date}. Always confirm locally if in doubt.`,
+  },
   settings: {
     changeSafeWord: 'Change safe word',
     manageCircle: 'Manage circle',
