@@ -1,3 +1,4 @@
+import { mapMemberRow } from './circleMappers';
 import { supabase } from './supabase';
 import { CircleMember } from '../types/models';
 
@@ -45,30 +46,6 @@ export async function createCircle(userId: string): Promise<string> {
 }
 
 const MEMBER_COLUMNS = 'id, circle_id, user_id, phone_number, display_name, status, invited_at, confirmed_at, safe_word_informed_at';
-
-function mapMemberRow(row: {
-  id: string;
-  circle_id: string;
-  user_id: string | null;
-  phone_number: string | null;
-  display_name: string;
-  status: CircleMember['status'];
-  invited_at: string;
-  confirmed_at: string | null;
-  safe_word_informed_at: string | null;
-}): CircleMember {
-  return {
-    id: row.id,
-    circleId: row.circle_id,
-    userId: row.user_id,
-    phoneNumber: row.phone_number,
-    displayName: row.display_name,
-    status: row.status,
-    invitedAt: row.invited_at,
-    confirmedAt: row.confirmed_at,
-    safeWordInformedAt: row.safe_word_informed_at,
-  };
-}
 
 export async function listMembers(circleId: string): Promise<CircleMember[]> {
   const { data, error } = await supabase
